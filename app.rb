@@ -162,14 +162,15 @@ class Game
       return
     end
 
-    puts 'Here are the available save states. Type the corresponding number to load it, or type "b" to go back:'
+    puts 'Here are the available save states. Enter the corresponding number to load it.'
+    puts "You can also enter 'b' to go back to your original game instead."
 
     sorted_save_files.each_with_index do |entry, index|
       puts "#{index + 1}: #{entry}"
     end
 
     choice = gets.chomp
-    return if choice.downcase == 'q'
+    return if choice.downcase == 'b'
 
     selected_index = choice.to_i - 1
     if selected_index.between?(0, sorted_save_files.length - 1)
