@@ -76,24 +76,17 @@ class Game
     @word_so_far = '_ ' * selected_word.length
     @wrong_guesses = 0
     @game_paused = false
-    show_word_progress
-    create_player
-  end
-
-  def create_player
     player = Player.new(self)
   end
 
   def play(player)
-    puts "For debugging, the word is: #{@selected_word}."
+    #puts "For debugging, the word is: #{@selected_word}."
     show_hangman_state
     puts "Welcome to Hangman. You know how to play. Don't lose please. Start guessing."
     puts "You can type 'save' or 'load' at any time."
+    show_hangman_state
     player.make_guess while @wrong_guesses < 7 && is_game_won? == false && !@game_paused
-  end
-
-  def show_word_progress
-    puts @word_so_far
+    puts "Game over. The word was \"#{selected_word}\"." if @wrong_guesses == 7
   end
 
   def valid_guess?(guess)
@@ -102,21 +95,21 @@ class Game
 
   def handle_correct_guess(guess)
     guessed_letters.push(guess)
-    puts 'Correct.'
     update_word_status(guess)
-    show_word_progress
+    show_hangman_state
+    puts 'Correct.'
   end
 
   def handle_incorrect_guess(guess)
     guessed_letters.push(guess)
     self.wrong_guesses += 1
     show_hangman_state
-    puts "Wrong. Guesses remaining: #{7 - wrong_guesses}"
-    show_word_progress
+    puts "Wrong. #{show_remaining_guesses}"
   end
 
   def show_hangman_state
     puts @@hangman_states[@wrong_guesses]
+    puts "#{@word_so_far}\n\n"
   end
 
   def update_word_status(guess)
@@ -125,6 +118,14 @@ class Game
         @word_so_far[index * 2] = guess # Using * 2 because I have spaces between underscores
       end
     end
+  end
+
+  def show_used_letters
+    puts "You have guessed the following: #{@guessed_letters}."
+  end
+
+  def show_remaining_guesses
+    "Guesses remaining: #{7 - @wrong_guesses}"
   end
 
   def is_game_won?
@@ -152,8 +153,40 @@ class Game
   end
 
   def load_game
-    @game_paused = true
-    puts 'Loading...'
+    puts 'Here are the available save states. Type the corresponding number to load it, or type "q" to quit:'
+
+    save_files = Dir.entries('save_states/').reject { |entry| ['.', '..'].include?(entry) }
+    sorted_save_files = save_files.sort
+
+    sorted_save_files.each_with_index do |entry, index|
+      puts "#{index + 1}: #{entry}"
+    end
+
+    choice = gets.chomp
+    return if choice.downcase == 'q'
+
+    selected_index = choice.to_i - 1
+    if selected_index.between?(0, sorted_save_files.length - 1)
+      load_state_from_file(File.join('save_states', sorted_save_files[selected_index]))
+    else
+      puts 'Invalid selection. Please try again.'
+    end
+  end
+
+
+  def load_state_from_file(file_path)
+    yaml_string = File.read(file_path)
+    data = YAML.load(yaml_string)
+
+    @selected_word = data[:selected_word]
+    @guessed_letters = data[:guessed_letters]
+    @word_so_far = data[:word_so_far]
+    @wrong_guesses = data[:wrong_guesses]
+
+    puts "Game loaded successfully."
+    show_hangman_state
+    show_hangman_state
+    show_used_letters
   end
 
   def to_yaml
@@ -164,12 +197,17 @@ class Game
       wrong_guesses: @wrong_guesses,
       })
   end
+
+  def self.from_yaml(yaml_string)
+    data = YAML.load(yaml_string)
+    p data
+    #self.new(data[:selected_word], data[:guessed_letters], data[:word_so_far], data[:wrong_guesses])
+  end
 end
 
 class Player
   def initialize(hangman)
     @hangman = hangman
-    puts 'player created'
     @hangman.play(self)
   end
 
@@ -188,6 +226,7 @@ class Player
     else
       @hangman.handle_incorrect_guess(guess)
     end
+    @hangman.show_used_letters
   end
 end
 
