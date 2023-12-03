@@ -81,7 +81,6 @@ class Game
 
   def play(player)
     #puts "For debugging, the word is: #{@selected_word}."
-    show_hangman_state
     puts "Welcome to Hangman. You know how to play. Don't lose please. Start guessing."
     puts "You can type 'save' or 'load' at any time."
     show_hangman_state
