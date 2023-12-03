@@ -125,7 +125,7 @@ class Game
   end
 
   def show_remaining_guesses
-    "Guesses remaining: #{7 - @wrong_guesses}"
+    puts "Guesses remaining: #{7 - @wrong_guesses}"
   end
 
   def is_game_won?
@@ -153,10 +153,16 @@ class Game
   end
 
   def load_game
-    puts 'Here are the available save states. Type the corresponding number to load it, or type "q" to quit:'
-
     save_files = Dir.entries('save_states/').reject { |entry| ['.', '..'].include?(entry) }
     sorted_save_files = save_files.sort
+
+    if sorted_save_files.length == 0
+      puts 'No save states exist yet.'
+      puts 'Continue with your existing game by guessing a letter. :-)'
+      return
+    end
+
+    puts 'Here are the available save states. Type the corresponding number to load it, or type "b" to go back:'
 
     sorted_save_files.each_with_index do |entry, index|
       puts "#{index + 1}: #{entry}"
@@ -185,8 +191,8 @@ class Game
 
     puts "Game loaded successfully."
     show_hangman_state
-    show_hangman_state
     show_used_letters
+    show_remaining_guesses
   end
 
   def to_yaml
@@ -196,12 +202,6 @@ class Game
       word_so_far: @word_so_far,
       wrong_guesses: @wrong_guesses,
       })
-  end
-
-  def self.from_yaml(yaml_string)
-    data = YAML.load(yaml_string)
-    p data
-    #self.new(data[:selected_word], data[:guessed_letters], data[:word_so_far], data[:wrong_guesses])
   end
 end
 
