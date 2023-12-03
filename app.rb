@@ -1,7 +1,7 @@
 class Game
   @@words = File.read('words.txt').split
 
-  attr_accessor :selected_word, :guessed_letters, :word_so_far, :hangman_states, :wrong_guesses
+  attr_accessor :selected_word, :guessed_letters, :word_so_far, :hangman_states, :wrong_guesses, :game_paused
 
   def initialize
     @selected_word = @@words.sample
@@ -73,6 +73,7 @@ class Game
       )
     ]
     @wrong_guesses = 0
+    @game_paused = false
     show_word_progress
     create_player
   end
@@ -85,8 +86,7 @@ class Game
     puts "For debugging, the word is: #{@selected_word}."
     show_hangman_state
     puts "Welcome to Hangman. You know how to play. Don't lose please. Start guessing."
-    player.make_guess while @wrong_guesses < 7 && is_game_won? == false
-
+    player.make_guess while @wrong_guesses < 7 && is_game_won? == false && !@game_paused
   end
 
   def show_word_progress
@@ -94,7 +94,7 @@ class Game
   end
 
   def valid_guess?(guess)
-    guess.length == 1 && !guessed_letters.include?(guess) && guess.match?(/^[A-Za-z]+$/)
+    guess.length == 1 && !guessed_letters.include?(guess) && guess.match?(/^[A-Za-z]+$/) || guess == 'save'
   end
 
   def show_hangman_state
@@ -125,9 +125,14 @@ class Player
     puts 'player created'
     @hangman.play(self)
   end
-  puts 'ah'
+
   def make_guess
     guess = gets.chomp
+    if guess.downcase == 'save'
+      save_game
+      return
+    end
+
     if @hangman.valid_guess?(guess)
       if @hangman.selected_word.include?(guess)
         @hangman.guessed_letters.push(guess)
@@ -143,6 +148,11 @@ class Player
     else
       puts "Invalid guess. Already guessed it or it's not a letter. Try again."
     end
+  end
+
+  def save_game
+    @hangman.game_paused = true
+    puts 'Saved!'
   end
 end
 
